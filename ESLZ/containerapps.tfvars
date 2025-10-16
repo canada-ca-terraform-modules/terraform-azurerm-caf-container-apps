@@ -28,9 +28,20 @@ container-app = {
     
     ingress_target_port = 80 # the port that should be exposed on the container
 
+    # optional, environment variables
+    env = {
+      # key = "value"
+    }
+
     # optional: this adds the custom domain so that it routes requests for these hosts to the application
     custom_domain_names = [ 
       "some.custom.domain.com",
     ]
+
+    # optional, identity section
+    identity = {
+      type = "UserAssigned" # or SystemAssigned, or SystemAssigned, UserAssigned
+      identity_ids = []     # The UserAssigned identity ids
+    }
   }
 }
