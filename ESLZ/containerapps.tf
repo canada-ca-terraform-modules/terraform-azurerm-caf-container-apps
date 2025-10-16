@@ -9,7 +9,7 @@ variable "container-app" {
 }
 
 module "containerApps" {
-  source = "github.com/canada-ca-terraform-modules/terraform-azurerm-caf-container-apps?ref=v1.0.0"
+  source = "github.com/canada-ca-terraform-modules/terraform-azurerm-caf-container-apps?ref=v0.1.0"
 
   container-app-environment = var.container-app-environment
   container-app = var.container-app
