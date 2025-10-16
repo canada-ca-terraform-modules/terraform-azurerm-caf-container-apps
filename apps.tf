@@ -30,6 +30,15 @@ resource "azurerm_container_app" "apps" {
       image = "${module.containerRegistry[each.key].container-registry-object.login_server}/${each.value.image}"
       cpu = each.value.cpu
       memory = each.value.memory
+
+      dynamic "env" {
+        for_each = try(each.value.env, {})
+
+        content {
+          name = env.key
+          value = env.value
+        }
+      }
     }
   }
 
@@ -43,9 +52,10 @@ resource "azurerm_container_app" "apps" {
       latest_revision = true
     }
   }
+
   identity {
-    type = "UserAssigned"
-    identity_ids = [ local.app_umi_map[each.key].id ] 
+    type = strcontains(try(each.value.identity.type, "UserAssigned"), "SystemAssigned") ? "SystemAssigned, UserAssigned" : "UserAssigned"
+    identity_ids = concat(try(each.value.identity.identity_ids, []), [ local.app_umi_map[each.key].id ])
   }
 
   tags = var.tags
