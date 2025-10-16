@@ -45,5 +45,9 @@ No requirements.
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_apps"></a> [apps](#output\_apps) | n/a |
+| <a name="output_environments"></a> [environments](#output\_environments) | n/a |
+| <a name="output_registries"></a> [registries](#output\_registries) | n/a |
 <!-- END_TF_DOCS -->
