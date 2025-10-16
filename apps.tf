@@ -27,7 +27,7 @@ resource "azurerm_container_app" "apps" {
   template {
     container {
       name = "${each.key}"
-      image = "${module.containerRegistry[each.key].container-registry-object.login_server}/${each.value.image}"
+      image = "${local.app_registry_map[each.key].login_server}/${each.value.image}"
       cpu = each.value.cpu
       memory = each.value.memory
 
