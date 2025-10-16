@@ -54,10 +54,3 @@ variable "subnets" {
   type = any
   default = null
 }
-
-variable "zones" {
-  description = "(Optional) The project DNS zones, used to create and validate custom domain entries"
-  type = any
-  default = {}
-}
-

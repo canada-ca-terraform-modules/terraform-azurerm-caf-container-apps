@@ -21,6 +21,5 @@ module "containerApps" {
   location = var.location
   resource_groups = local.resource_groups_all
   subnets = local.subnets
-  zones = local.zones
   tags = var.tags
 }

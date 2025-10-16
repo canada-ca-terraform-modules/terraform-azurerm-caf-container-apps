@@ -16,13 +16,8 @@ data "azurerm_key_vault_certificate" "lz-cert" {
   key_vault_id = var.keyvault_id
 }
 
-locals {
-  project-zones-by-zone-name = {
-    for key, value in var.zones:
-      value.name => value
-  }
-}
-
+# Have to use azapi provider because importing certificate from key vault 
+# is not (yet) supported by the azurerm provider
 resource "azapi_resource" "cae-certificate" {
   depends_on = [ azurerm_role_assignment.cae-certificate-reader ]
 
