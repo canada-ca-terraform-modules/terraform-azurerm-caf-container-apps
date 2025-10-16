@@ -3,7 +3,7 @@ module "containerRegistry" {
 
   for_each = azurerm_container_app_environment.env
 
-  userDefinedString = "${each.key}-cae"
+  userDefinedString = "${each.key}cae"
   env = var.env
   group = var.group
   project = var.project
