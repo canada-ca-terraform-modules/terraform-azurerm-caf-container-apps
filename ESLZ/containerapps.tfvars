@@ -1,0 +1,36 @@
+container-app-environment = {
+  test = {
+    resource_group = "Project"
+
+    subnet = "APP"
+
+    workload_profiles = {
+      default = {
+        workload_profile_type = "D4"
+        maximum_count = 1
+        minimum_count = 0
+      }
+    }
+
+    cert_name = "some-certificate-in-the-keyvault-pfx"
+  }
+}
+
+container-app = {
+  test = {
+    resource_group = "Project" # needs to be the same as the environment referenced above
+    container-app-environment = "test" # this should be a key from above
+
+    image = "nginx:latest" # this assumes the image is in the created registry
+    cpu = 0.25
+    memory = "0.5Gi"
+    workload_profile_name = "default"
+    
+    ingress_target_port = 80 # the port that should be exposed on the container
+
+    # optional: this adds the custom domain so that it routes requests for these hosts to the application
+    custom_domain_names = [ 
+      "some.custom.domain.com",
+    ]
+  }
+}
