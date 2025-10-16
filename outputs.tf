@@ -14,7 +14,7 @@ output "apps" {
             key => {
                 object = app
                 custom_domains = {
-                    for domain_key, value in custom_azurerm_container_app_custom_domain.example:
+                    for domain_key, value in azurerm_container_app_custom_domain.example:
                         split(" ", domain_key)[1] => value
                     if startswith(domain_key, key)
                 }
@@ -24,7 +24,7 @@ output "apps" {
 
 output "registries" {
     value = { 
-        for key, registry in module.container_registry: 
+        for key, registry in module.containerRegistry: 
             key => {
                 acr_pull_umi = registry.acr-pull-umi[0]
                 object = registry.container-registry-object
