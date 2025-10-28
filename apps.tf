@@ -64,7 +64,8 @@ resource "azurerm_container_app" "apps" {
 
   ingress {
     target_port = each.value.ingress_target_port
-    external_enabled = true
+    external_enabled = try(each.value.ingress_external_enabled, true)
+    
     client_certificate_mode = "ignore"
 
     traffic_weight {

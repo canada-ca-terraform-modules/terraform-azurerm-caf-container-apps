@@ -33,7 +33,8 @@ container-app = {
     workload_profile_name = "default"
     
     ingress_target_port = 80 # the port that should be exposed on the container
-
+    ingress_external_enabled = true # whether the application is available outside the environment
+    
     # optional, environment variables
     env = {
       # key = "value"
