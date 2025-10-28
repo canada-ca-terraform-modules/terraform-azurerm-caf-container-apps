@@ -34,5 +34,6 @@ resource "azurerm_container_app_environment" "env" {
   }
 
   tags = var.tags
-  #logs_destination = "azure-monitor"
+  
+  log_analytics_workspace_id = try(each.value.log_analytics_workspace_id, null)
 }

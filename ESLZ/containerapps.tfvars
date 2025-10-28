@@ -13,6 +13,9 @@ container-app-environment = {
     }
 
     cert_name = "some-certificate-in-the-keyvault-pfx"
+
+    # Optional: ID to the LAW that should be used for container system and app logs
+    # log_analytics_workspace_id = ""
   }
 }
 
@@ -21,13 +24,17 @@ container-app = {
     resource_group = "Project" # needs to be the same as the environment referenced above
     container-app-environment = "test" # this should be a key from above
 
+    # Optional, the minimum number of instances of this app
+    min_replicas = 0
+
     image = "nginx:latest" # this assumes the image is in the created registry
     cpu = 0.25
     memory = "0.5Gi"
     workload_profile_name = "default"
     
     ingress_target_port = 80 # the port that should be exposed on the container
-
+    ingress_external_enabled = true # whether the application is available outside the environment
+    
     # optional, environment variables
     env = {
       # key = "value"
