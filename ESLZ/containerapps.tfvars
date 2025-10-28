@@ -13,6 +13,9 @@ container-app-environment = {
     }
 
     cert_name = "some-certificate-in-the-keyvault-pfx"
+
+    # Optional: ID to the LAW that should be used for container system and app logs
+    # log_analytics_workspace_id = ""
   }
 }
 
@@ -20,6 +23,9 @@ container-app = {
   test = {
     resource_group = "Project" # needs to be the same as the environment referenced above
     container-app-environment = "test" # this should be a key from above
+
+    # Optional, the minimum number of instances of this app
+    min_replicas = 0
 
     image = "nginx:latest" # this assumes the image is in the created registry
     cpu = 0.25

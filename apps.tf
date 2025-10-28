@@ -25,18 +25,38 @@ resource "azurerm_container_app" "apps" {
   }
 
   template {
+    min_replicas = try(each.value.min_replicas, null)
+
     container {
       name = "${each.key}"
       image = "${local.app_registry_map[each.key].login_server}/${each.value.image}"
       cpu = each.value.cpu
       memory = each.value.memory
-
+    
       dynamic "env" {
         for_each = try(each.value.env, {})
 
         content {
           name = env.key
           value = env.value
+        }
+      }
+    }
+
+    dynamic "http_scale_rule" {
+      for_each = try(each.value.http_scale_rules, { http-scaler = { concurrent_requests = 10 }})
+
+      content {
+        name = http_scale_rule.key
+        concurrent_requests = http_scale_rule.value.concurrent_requests
+
+        dynamic "authentication" {
+          for_each = try(http_scale_rule.authentication, {})
+
+          content {
+            secret_name = authentication.key
+            trigger_parameter = authentication.value.trigger_parameter
+          }
         }
       }
     }
