@@ -87,7 +87,7 @@ resource "azurerm_container_app_custom_domain" "example" {
   for_each = merge([
     for key, value in var.container-app:
     {
-      for domain in value.custom_domain_names:
+      for domain in try(value.custom_domain_names, []):
       "${key} ${domain}" => {
         name = domain
         container_app_id = azurerm_container_app.apps[key].id
