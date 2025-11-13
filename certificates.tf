@@ -10,6 +10,7 @@ data "azurerm_key_vault_certificate" "lz-cert" {
   for_each = toset([ 
     for key, value in var.container-app-environment: 
       value.cert_name
+      if try(value.cert_name, null) != null
   ])
 
   name = each.key
@@ -30,6 +31,7 @@ resource "azapi_resource" "cae-certificate" {
         identity = azurerm_user_assigned_identity.environment[key].id
         location = azurerm_container_app_environment.env[key].location
       }
+      if try(value.cert_name, null) != null
   }
 
   type = "Microsoft.App/managedEnvironments/certificates@2025-02-02-preview"
