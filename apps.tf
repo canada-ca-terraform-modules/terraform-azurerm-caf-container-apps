@@ -1,12 +1,27 @@
 locals {
   app_umi_map = {
     for key, app in var.container-app:
-      key => module.containerRegistry[app.container-app-environment].acr-pull-umi[0]
+      key => try(
+        module.containerRegistry[app.container-app-environment].acr-pull-umi[0],
+        var.container-app-environment[app.container-app-environment].registry_pull_umi
+      )
   }
 
   app_registry_map = {
     for key, app in var.container-app:
-      key => module.containerRegistry[app.container-app-environment].container-registry-object
+      key => try(
+        module.containerRegistry[app.container-app-environment].container-registry-object,
+        data.azurerm_container_registry.existing[app.container-app-environment]
+      )
+  }
+
+  app_resource_group_names = {
+    for key, app in var.container-app :
+    key => (
+      strcontains(app.resource_group, "/resourceGroups/") 
+        ? split("/resourceGroups/", app.resource_group)[1] 
+        : var.resource_groups[app.resource_group].name
+    )
   }
 }
 
@@ -15,7 +30,7 @@ resource "azurerm_container_app" "apps" {
 
   name = "${each.key}"
   container_app_environment_id = azurerm_container_app_environment.env[each.value.container-app-environment].id
-  resource_group_name = var.resource_groups[each.value.resource_group].name
+  resource_group_name = local.app_resource_group_names[each.key]
   revision_mode = "Single"
   workload_profile_name = each.value.workload_profile_name
 

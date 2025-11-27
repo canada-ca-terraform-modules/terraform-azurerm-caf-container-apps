@@ -1,5 +1,9 @@
 resource "azurerm_role_assignment" "cae-certificate-reader" {
-  for_each = azurerm_user_assigned_identity.environment
+  for_each = {
+    for key, value in azurerm_user_assigned_identity.environment:
+    key => value
+    if var.keyvault_id != null
+  }
 
   role_definition_name = "Key Vault Certificate User"
   scope = var.keyvault_id

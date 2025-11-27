@@ -26,6 +26,7 @@ No requirements.
 | [azurerm_container_app_environment.env](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/container_app_environment) | resource |
 | [azurerm_role_assignment.cae-certificate-reader](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
 | [azurerm_user_assigned_identity.environment](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/user_assigned_identity) | resource |
+| [azurerm_container_registry.existing](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/container_registry) | data source |
 | [azurerm_key_vault_certificate.lz-cert](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/key_vault_certificate) | data source |
 
 ## Inputs
@@ -36,7 +37,7 @@ No requirements.
 | <a name="input_container-app-environment"></a> [container-app-environment](#input\_container-app-environment) | inputs | `any` | `{}` | no |
 | <a name="input_env"></a> [env](#input\_env) | (Required) Env value for the name of the resource | `string` | n/a | yes |
 | <a name="input_group"></a> [group](#input\_group) | (Required) Group value for the name of the resource | `string` | n/a | yes |
-| <a name="input_keyvault_id"></a> [keyvault\_id](#input\_keyvault\_id) | The project key vault id from which certificates should be read | `string` | `""` | no |
+| <a name="input_keyvault_id"></a> [keyvault\_id](#input\_keyvault\_id) | The project key vault id from which certificates should be read | `string` | `null` | no |
 | <a name="input_location"></a> [location](#input\_location) | Azure location for the resource | `string` | `"canadacentral"` | no |
 | <a name="input_project"></a> [project](#input\_project) | (Required) Project value for the name of the resource | `string` | n/a | yes |
 | <a name="input_resource_groups"></a> [resource\_groups](#input\_resource\_groups) | Resouce group object containing a list of resource group in the target project | `any` | `null` | no |

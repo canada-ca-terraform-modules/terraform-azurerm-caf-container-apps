@@ -13,7 +13,7 @@ module "containerApps" {
 
   container-app-environment = var.container-app-environment
   container-app = var.container-app
-  keyvault_id = local.Project-kv.id
+  keyvault_id = local.Project-kv.id # optional, only if using certificates from Key Vault
 
   env = var.env
   group = var.group
