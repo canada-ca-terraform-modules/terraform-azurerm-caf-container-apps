@@ -1,7 +1,12 @@
+# auto created registry if none specified
 module "containerRegistry" {
   source = "github.com/canada-ca-terraform-modules/terraform-azurerm-caf-container-registry.git?ref=v1.0.1"
 
-  for_each = azurerm_container_app_environment.env
+  for_each = {
+    for key, value in var.container-app-environment :
+    key => value
+    if try(value.registry_id, null) == null
+  }
 
   userDefinedString = "${each.key}cae"
   env = var.env
@@ -32,4 +37,18 @@ module "containerRegistry" {
   subnets = var.subnets
   private_dns_zone_ids = {}
   tags = var.tags
+}
+
+data "azurerm_container_registry" "existing" {
+  for_each = {
+    for key, value in var.container-app-environment :
+    key => {
+      resource_group_name = split("/resourceGroups/", split("/providers/", value.registry_id)[0])[1]
+      name = split("/providers/Microsoft.ContainerRegistry/registries/", value.registry_id)[1]
+    }
+    if try(value.registry_id, null) != null
+  }
+
+  name = each.value.name
+  resource_group_name = each.value.resource_group_name
 }

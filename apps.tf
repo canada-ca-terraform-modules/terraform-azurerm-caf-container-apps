@@ -1,12 +1,18 @@
 locals {
   app_umi_map = {
     for key, app in var.container-app:
-      key => module.containerRegistry[app.container-app-environment].acr-pull-umi[0]
+      key => try(
+        module.containerRegistry[app.container-app-environment].acr-pull-umi[0],
+        var.container-app-environment[app.container-app-environment].registry_pull_umi
+      )
   }
 
   app_registry_map = {
     for key, app in var.container-app:
-      key => module.containerRegistry[app.container-app-environment].container-registry-object
+      key => try(
+        module.containerRegistry[app.container-app-environment].container-registry-object,
+        data.azurerm_container_registry.existing[app.container-app-environment]
+      )
   }
 }
 
