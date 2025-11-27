@@ -12,7 +12,7 @@ variable "container-app" {
 variable "keyvault_id" {
     type = string
     description = "The project key vault id from which certificates should be read"
-    default = ""
+    default = null
 }
 
 # standard variables

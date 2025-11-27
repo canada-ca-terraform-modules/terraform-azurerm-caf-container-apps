@@ -12,6 +12,7 @@ container-app-environment = {
       }
     }
 
+    # Optional: name of certificate in Key Vault to be used by apps in this environment
     cert_name = "some-certificate-in-the-keyvault-pfx"
 
     # Optional: ID to the LAW that should be used for container system and app logs
