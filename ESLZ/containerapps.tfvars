@@ -1,8 +1,8 @@
 container-app-environment = {
   test = {
-    resource_group = "Project"
+    resource_group = "Project" # this can refer to a key in var.resource_groups or be a full resource ID
 
-    subnet = "APP"
+    subnet = "APP" # this can refer to a key in var.subnets or be a full resource ID
 
     workload_profiles = {
       default = {
