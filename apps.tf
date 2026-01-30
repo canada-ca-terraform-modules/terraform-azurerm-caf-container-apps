@@ -95,6 +95,14 @@ resource "azurerm_container_app" "apps" {
   }
 
   tags = var.tags
+
+  lifecycle {
+    
+    ignore_changes = [ 
+      # ignore the image as this is expect to be managed by the deployment processes
+      template[0].container[0].image 
+    ]
+  }
 }
 
 resource "azurerm_container_app_custom_domain" "example" {
