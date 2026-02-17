@@ -1,17 +1,17 @@
 locals {
-  app_umi_map = {
+  app_umi_id_map = {
     for key, app in var.container-app:
       key => try(
-        module.containerRegistry[app.container-app-environment].acr-pull-umi[0],
-        var.container-app-environment[app.container-app-environment].registry_pull_umi
+        var.container-app-environment[app.container-app-environment].registry_pull_umi,
+        module.containerRegistry[app.container-app-environment].acr-pull-umi[0].id
       )
   }
 
   app_registry_map = {
     for key, app in var.container-app:
       key => try(
-        module.containerRegistry[app.container-app-environment].container-registry-object,
-        data.azurerm_container_registry.existing[app.container-app-environment]
+        data.azurerm_container_registry.existing[app.container-app-environment],
+        module.containerRegistry[app.container-app-environment].container-registry-object
       )
   }
 
@@ -36,7 +36,7 @@ resource "azurerm_container_app" "apps" {
 
   registry {
     server = local.app_registry_map[each.key].login_server
-    identity = local.app_umi_map[each.key].id
+    identity = local.app_umi_id_map[each.key]
   }
 
   template {
@@ -91,7 +91,7 @@ resource "azurerm_container_app" "apps" {
 
   identity {
     type = strcontains(try(each.value.identity.type, "UserAssigned"), "SystemAssigned") ? "SystemAssigned, UserAssigned" : "UserAssigned"
-    identity_ids = concat(try(each.value.identity.identity_ids, []), [ local.app_umi_map[each.key].id ])
+    identity_ids = concat(try(each.value.identity.identity_ids, []), [ local.app_umi_id_map[each.key] ])
   }
 
   tags = var.tags
