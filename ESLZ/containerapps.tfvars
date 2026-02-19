@@ -12,8 +12,10 @@ container-app-environment = {
       }
     }
 
-    # Optional: name of certificate in Key Vault to be used by apps in this environment
-    cert_name = "some-certificate-in-the-keyvault-pfx"
+    # Optional: list of certificate names in Key Vault to be used by apps in this environment.
+    certificate_names = [
+      "some-other-certificate-in-the-keyvault-pfx"
+    ]
 
     # Optional: ID to the LAW that should be used for container system and app logs
     # log_analytics_workspace_id = ""
@@ -49,6 +51,12 @@ container-app = {
     custom_domain_names = [ 
       "some.custom.domain.com",
     ]
+
+    # optional: this defines which certificate in the environment (in the certificate_names list) should be used for the SNI setup
+    # defaults to the first certificate in the list if not provided for a domain.
+    custom_domain_name_certificate_mapping = {
+      "some.custom.domain.com" = "some-certificate-in-the-keyvault-pfx"
+    }
 
     # optional, identity section
     identity = {

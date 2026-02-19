@@ -105,17 +105,31 @@ resource "azurerm_container_app" "apps" {
   }
 }
 
+locals {
+
+  app_custom_domain_cert_map = {
+    for key, app in var.container-app:
+      key => {
+        for domain in try(app.custom_domain_names, []):
+          domain => try(
+            app.custom_domain_name_certificate_mapping[domain],
+            local.container-app-certs[app.container-app-environment][0] # if a mapping isn't provided, just take the first cert for the environment
+          )
+      }
+  }
+}
+
 resource "azurerm_container_app_custom_domain" "example" {
 
   for_each = merge([
     for key, value in var.container-app:
     {
       for domain in try(value.custom_domain_names, []):
-      "${key} ${domain}" => {
-        name = domain
-        container_app_id = azurerm_container_app.apps[key].id
-        container_app_environment_certificate_id = azapi_resource.cae-certificate[value.container-app-environment].output.id
-      }
+        "${key} ${domain}" => {
+          name = domain
+          container_app_id = azurerm_container_app.apps[key].id
+          container_app_environment_certificate_id = azapi_resource.cae-certificate["${value.container-app-environment} ${local.app_custom_domain_cert_map[key][domain]}"].id
+        }
     }
   ]...)
 
