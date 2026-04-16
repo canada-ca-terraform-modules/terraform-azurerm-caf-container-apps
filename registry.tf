@@ -28,8 +28,8 @@ module "containerRegistry" {
 
     private_endpoint = {
       registry = {
-        resource_group    = "Project"
-        subnet            = "RZ"
+        resource_group    = var.container-app-environment[each.key].resource_group
+        subnet            = try(var.container-app-environment[each.key].registry_private_endpoint_subnet, "RZ")
         subresource_names = ["registry"]
       }
     }
