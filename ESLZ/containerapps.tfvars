@@ -21,6 +21,8 @@ container-app-environment = {
     # Optional: Information about an existing registry to reference. Otherwise a new registry will be created
     # registry_id = "/subscriptions/00000000-0000-0000-000
     # registry_pull_umi = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-name/providers/Microsoft.ManagedIdentity/userAssignedIdentities/umi-name"
+
+    registry_private_endpoint_subnet = "RZ" # this can refer to a key in var.subnets or be a full resource ID, needs to be in the same VNet as the environment subnet
   }
 }
 
