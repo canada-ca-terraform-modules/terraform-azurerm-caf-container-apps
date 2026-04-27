@@ -40,7 +40,11 @@ resource "azurerm_container_app_environment" "env" {
 
   identity {
     type = "UserAssigned"
-    identity_ids = [ azurerm_user_assigned_identity.environment[each.key].id ]
+    identity_ids = distinct(concat(
+      [azurerm_user_assigned_identity.environment[each.key].id],
+      try(each.value.additional_identity_ids != null ? each.value.additional_identity_ids : [], []),
+      try(each.value.additional_identity_id != null ? [each.value.additional_identity_id] : [], [])
+    ))
   }
 
   dynamic "workload_profile" {
