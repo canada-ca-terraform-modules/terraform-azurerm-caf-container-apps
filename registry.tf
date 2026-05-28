@@ -17,7 +17,7 @@ module "containerRegistry" {
   container_registry = {
     resource_group = var.container-app-environment[each.key].resource_group
     user_identity_enabled = true
-    admin_enabled = false
+    admin_enabled = try(each.value.admin_enabled, false)
     public_network_access_enabled = false
     data_endpoint_enabled = true
 
