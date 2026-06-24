@@ -10,12 +10,19 @@ resource "azurerm_role_assignment" "cae-certificate-reader" {
   principal_id = each.value.principal_id
 }
 
+locals {
+  container-app-certs = {
+    for key, value in var.container-app-environment:
+      key => try(value.certificate_names, [])
+      
+  }
+}
+
+# This will be a distinct set of all the certificate names across all container app environments in the keyvault
 data "azurerm_key_vault_certificate" "lz-cert" {
-  for_each = toset([ 
-    for key, value in var.container-app-environment: 
-      value.cert_name
-      if try(value.cert_name, null) != null
-  ])
+  for_each = toset(
+    flatten(values(local.container-app-certs))
+  )
 
   name = each.key
   key_vault_id = var.keyvault_id
@@ -26,17 +33,19 @@ data "azurerm_key_vault_certificate" "lz-cert" {
 resource "azapi_resource" "cae-certificate" {
   depends_on = [ azurerm_role_assignment.cae-certificate-reader ]
 
-  for_each = {
-    for key, value in var.container-app-environment:
-      key => {
-        name = value.cert_name
-        resource_id = azurerm_container_app_environment.env[key].id
-        keyVaultUrl = data.azurerm_key_vault_certificate.lz-cert[value.cert_name].versionless_secret_id
-        identity = azurerm_user_assigned_identity.environment[key].id
-        location = azurerm_container_app_environment.env[key].location
-      }
-      if try(value.cert_name, null) != null
-  }
+  for_each = merge([
+    for key, certs in local.container-app-certs:
+    {
+      for cert in certs:
+        "${key} ${cert}" => {
+          name = cert
+          resource_id = azurerm_container_app_environment.env[key].id
+          keyVaultUrl = data.azurerm_key_vault_certificate.lz-cert[cert].versionless_secret_id
+          identity = azurerm_user_assigned_identity.environment[key].id
+          location = azurerm_container_app_environment.env[key].location
+        }
+    }
+  ]...)
 
   type = "Microsoft.App/managedEnvironments/certificates@2025-02-02-preview"
   parent_id = each.value.resource_id
