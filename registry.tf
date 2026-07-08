@@ -49,4 +49,7 @@ data "azapi_resource" "existing_registry" {
   type      = "Microsoft.ContainerRegistry/registries@2026-03-01-preview"
   resource_id = each.value.registry_id
   
+  response_export_values = {
+    login_server = "properties.loginServer"
+  }
 }
