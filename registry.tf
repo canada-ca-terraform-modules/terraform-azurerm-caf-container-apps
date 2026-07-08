@@ -39,16 +39,14 @@ module "containerRegistry" {
   tags = var.tags
 }
 
-data "azurerm_container_registry" "existing" {
+data "azapi_resource" "existing_registry" {
   for_each = {
     for key, value in var.container-app-environment :
-    key => {
-      resource_group_name = split("/resourceGroups/", split("/providers/", value.registry_id)[0])[1]
-      name = split("/providers/Microsoft.ContainerRegistry/registries/", value.registry_id)[1]
-    }
+    key => value
     if try(value.registry_id, null) != null
   }
 
-  name = each.value.name
-  resource_group_name = each.value.resource_group_name
+  type      = "Microsoft.ContainerRegistry/registries@2026-03-01-preview"
+  resource_id = each.value.registry_id
+  
 }

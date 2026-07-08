@@ -10,7 +10,7 @@ locals {
   app_registry_map = {
     for key, app in var.container-app:
       key => try(
-        data.azurerm_container_registry.existing[app.container-app-environment],
+        data.azapi_resource.existing_registry[app.container-app-environment].output.properties,
         module.containerRegistry[app.container-app-environment].container-registry-object
       )
   }
