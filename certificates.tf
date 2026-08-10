@@ -1,53 +1,53 @@
 resource "azurerm_role_assignment" "cae-certificate-reader" {
   for_each = {
-    for key, value in azurerm_user_assigned_identity.environment:
+    for key, value in azurerm_user_assigned_identity.environment :
     key => value
     if var.keyvault_id != null
   }
 
   role_definition_name = "Key Vault Certificate User"
-  scope = var.keyvault_id
-  principal_id = each.value.principal_id
+  scope                = var.keyvault_id
+  principal_id         = each.value.principal_id
 }
 
 data "azurerm_key_vault_certificate" "lz-cert" {
-  for_each = toset([ 
-    for key, value in var.container-app-environment: 
-      value.cert_name
-      if try(value.cert_name, null) != null
+  for_each = toset([
+    for key, value in var.container-app-environment :
+    value.cert_name
+    if try(value.cert_name, null) != null
   ])
 
-  name = each.key
+  name         = each.key
   key_vault_id = var.keyvault_id
 }
 
 # Have to use azapi provider because importing certificate from key vault 
 # is not (yet) supported by the azurerm provider
 resource "azapi_resource" "cae-certificate" {
-  depends_on = [ azurerm_role_assignment.cae-certificate-reader ]
+  depends_on = [azurerm_role_assignment.cae-certificate-reader]
 
   for_each = {
-    for key, value in var.container-app-environment:
-      key => {
-        name = value.cert_name
-        resource_id = azurerm_container_app_environment.env[key].id
-        keyVaultUrl = data.azurerm_key_vault_certificate.lz-cert[value.cert_name].versionless_secret_id
-        identity = azurerm_user_assigned_identity.environment[key].id
-        location = azurerm_container_app_environment.env[key].location
-      }
-      if try(value.cert_name, null) != null
+    for key, value in var.container-app-environment :
+    key => {
+      name        = value.cert_name
+      resource_id = azurerm_container_app_environment.env[key].id
+      keyVaultUrl = data.azurerm_key_vault_certificate.lz-cert[value.cert_name].versionless_secret_id
+      identity    = azurerm_user_assigned_identity.environment[key].id
+      location    = azurerm_container_app_environment.env[key].location
+    }
+    if try(value.cert_name, null) != null
   }
 
-  type = "Microsoft.App/managedEnvironments/certificates@2025-02-02-preview"
+  type      = "Microsoft.App/managedEnvironments/certificates@2025-02-02-preview"
   parent_id = each.value.resource_id
-  name = each.value.name
-  location = each.value.location
-  tags = var.tags
+  name      = each.value.name
+  location  = each.value.location
+  tags      = var.tags
 
   body = {
     properties = {
       certificateKeyVaultProperties = {
-        identity = each.value.identity
+        identity    = each.value.identity
         keyVaultUrl = each.value.keyVaultUrl
       }
       certificateType = "ServerSSLCertificate"
@@ -55,6 +55,6 @@ resource "azapi_resource" "cae-certificate" {
   }
 
   lifecycle {
-    ignore_changes = [ body ]
-  }  
+    ignore_changes = [body]
+  }
 }

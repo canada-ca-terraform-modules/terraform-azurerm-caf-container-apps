@@ -1,20 +1,62 @@
+# terraform-azurerm-caf-container-apps
+
+CAF module to deploy Azure Container App Environments and Container Apps, with
+optional auto-created Azure Container Registry, Key Vault-backed custom domain
+certificates, and user-assigned managed identities.
+
+## New arguments (azurerm >= 5.0)
+
+### container-app-environment — new top-level keys
+
+| Key | Type | Description |
+|---|---|---|
+| `name` | string | Override the auto-generated environment name (default: `{env}-{group}-{project}-{key}-cae`) |
+| `umi_name` | string | Override the auto-generated environment UMI name (default: `{env}-{group}-{project}-{key}-cae-umi`) |
+| `umi_isolation_scope` | string | Isolation scope for the environment's UMI. Only possible value is `Regional` |
+| `infrastructure_resource_group_name` | string | Name of the platform-managed infrastructure resource group |
+| `internal_load_balancer_enabled` | bool | Whether the environment's load balancer is internal-only (default: `true`). Set to `false` to allow `public_network_access = "Enabled"` to take effect |
+| `zone_redundancy_enabled` | bool | Should the environment be created with Zone Redundancy enabled? |
+| `mutual_tls_enabled` | bool | Should mutual TLS (mTLS) be enabled? |
+| `public_network_access` | string | `Enabled` or `Disabled` |
+| `logs_destination` | string | `log-analytics` or `azure-monitor` |
+| `dapr_application_insights_connection_string` | string | Application Insights connection string used by Dapr |
+
+### container-app — new top-level keys
+
+| Key | Type | Description |
+|---|---|---|
+| `name` | string | Override the auto-generated app name (default: the map key) |
+| `max_inactive_revisions` | number | The maximum number of inactive revisions allowed for this Container App |
+| `max_replicas` | number | The maximum number of instances of this app |
+| `secrets` | map(object) | Secrets exposed to the container via `value` / `key_vault_secret_id` / `identity` |
+| `dapr` | object | Dapr integration (`app_id`, `app_port`, `app_protocol`) |
+| `ingress_transport` | string | `auto`, `http`, `http2` or `tcp` |
+| `ingress_allow_insecure_connections` | bool | Should ingress allow insecure (non-HTTPS) connections? |
+| `ingress_exposed_port` | number | Exposed port for TCP ingress (only valid when `ingress_transport = "tcp"`) |
+| `ip_security_restrictions` | map(object) | IP-filtering rules for the ingress |
+| `cors` | object | CORS configuration for the ingress |
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
-No requirements.
+| Name | Version |
+|------|---------|
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
+| <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) | ~> 2.0 |
+| <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) | ~> 5.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_azapi"></a> [azapi](#provider\_azapi) | n/a |
-| <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | n/a |
+| <a name="provider_azapi"></a> [azapi](#provider\_azapi) | ~> 2.0 |
+| <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | ~> 5.0 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_containerRegistry"></a> [containerRegistry](#module\_containerRegistry) | github.com/canada-ca-terraform-modules/terraform-azurerm-caf-container-registry.git | v1.0.1 |
+| <a name="module_containerRegistry"></a> [containerRegistry](#module\_containerRegistry) | github.com/canada-ca-terraform-modules/terraform-azurerm-caf-container-registry.git | v1.1.0 |
 
 ## Resources
 
