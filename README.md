@@ -48,8 +48,8 @@ certificates, and user-assigned managed identities.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_azapi"></a> [azapi](#provider\_azapi) | 2.12.0 |
-| <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | 5.0.1 |
+| <a name="provider_azapi"></a> [azapi](#provider\_azapi) | ~> 2.0 |
+| <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | ~> 5.0 |
 
 ## Modules
 
