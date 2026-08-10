@@ -42,7 +42,7 @@ resource "azurerm_container_app_environment" "env" {
   zone_redundancy_enabled                     = try(each.value.zone_redundancy_enabled, null)
   mutual_tls_enabled                          = try(each.value.mutual_tls_enabled, null)
   public_network_access                       = try(each.value.public_network_access, null)
-  logs_destination                            = try(each.value.logs_destination, null)
+  logs_destination                            = try(each.value.logs_destination, try(each.value.log_analytics_workspace_id, null) != null ? "log-analytics" : null, null)
   dapr_application_insights_connection_string = try(each.value.dapr_application_insights_connection_string, null)
 
   identity {
