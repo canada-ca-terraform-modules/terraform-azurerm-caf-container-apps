@@ -3,7 +3,7 @@ locals {
     for key, app in var.container-app :
     key => try(
       var.container-app-environment[app.container-app-environment].registry_pull_umi,
-      module.containerRegistry[app.container-app-environment].acr-pull-umi[0].id
+      try(module.containerRegistry[app.container-app-environment].acr-pull-umi[0].id, null)
     )
   }
 
@@ -148,6 +148,16 @@ resource "azurerm_container_app" "apps" {
 
   lifecycle {
 
+    precondition {
+      condition     = local.app_umi_id_map[each.key] != null
+      error_message = "container-app '${each.key}': could not resolve a registry pull identity. When the associated container-app-environment sets 'registry_id' (existing registry), it must also set 'registry_pull_umi'."
+    }
+
+    precondition {
+      condition     = try(each.value.ingress_exposed_port, null) == null || try(each.value.ingress_transport, null) == "tcp"
+      error_message = "container-app '${each.key}': 'ingress_exposed_port' is only valid when 'ingress_transport' = \"tcp\"."
+    }
+
     ignore_changes = [
       # ignore the image as this is expect to be managed by the deployment processes
       template[0].container[0].image
@@ -166,6 +176,7 @@ resource "azurerm_container_app_custom_domain" "example" {
         container_app_id                         = azurerm_container_app.apps[key].id
         container_app_environment_certificate_id = azapi_resource.cae-certificate[value.container-app-environment].output.id
       }
+      if contains(keys(azapi_resource.cae-certificate), value.container-app-environment)
     }
   ]...)
 
@@ -174,4 +185,18 @@ resource "azurerm_container_app_custom_domain" "example" {
   container_app_id                         = each.value.container_app_id
   container_app_environment_certificate_id = each.value.container_app_environment_certificate_id
   certificate_binding_type                 = "SniEnabled"
+}
+
+# Guards the cases the for_each expression above cannot itself raise a helpful error for:
+# an app requesting custom_domain_names whose container-app-environment has no cert_name
+# (and therefore no azapi_resource.cae-certificate entry) is silently skipped rather than
+# crashing the plan with an "Invalid index" error.
+check "custom_domain_requires_certificate" {
+  assert {
+    condition = alltrue([
+      for key, value in var.container-app :
+      length(try(value.custom_domain_names, [])) == 0 || contains(keys(azapi_resource.cae-certificate), value.container-app-environment)
+    ])
+    error_message = "container-app: one or more apps set 'custom_domain_names' but their container-app-environment has no 'cert_name' configured, so no certificate exists to bind. Those custom domains were not created."
+  }
 }

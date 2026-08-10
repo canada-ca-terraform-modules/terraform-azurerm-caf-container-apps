@@ -283,3 +283,141 @@ run "custom_domain" {
     error_message = "custom domain resource must be keyed by \"<app> <domain>\" and expose the domain name"
   }
 }
+
+# Covers the auto-created ACR path (registry_id not set): the containerRegistry
+# child module (v1.1.0) must be instantiated and the app must wire up to its
+# login_server / acr-pull-umi outputs instead of the existing-registry data source.
+run "auto_created_registry_path" {
+  command = apply
+
+  override_resource {
+    target = azurerm_user_assigned_identity.environment["test"]
+    values = {
+      id = "/subscriptions/12345678-1234-9876-4563-123456789012/resourceGroups/rg-project/providers/Microsoft.ManagedIdentity/userAssignedIdentities/Dev-OPS-CORE-test-cae-umi"
+    }
+  }
+
+  override_resource {
+    target = azurerm_container_app_environment.env["test"]
+    values = {
+      id = "/subscriptions/12345678-1234-9876-4563-123456789012/resourceGroups/rg-project/providers/Microsoft.App/managedEnvironments/Dev-OPS-CORE-test-cae"
+    }
+  }
+
+  override_resource {
+    target = module.containerRegistry["test"].azurerm_container_registry.registry
+    values = {
+      id = "/subscriptions/12345678-1234-9876-4563-123456789012/resourceGroups/rg-project/providers/Microsoft.ContainerRegistry/registries/DevCCRtestcaeRegistry"
+    }
+  }
+
+  override_resource {
+    target = module.containerRegistry["test"].azurerm_user_assigned_identity.identity[0]
+    values = {
+      id = "/subscriptions/12345678-1234-9876-4563-123456789012/resourceGroups/rg-project/providers/Microsoft.ManagedIdentity/userAssignedIdentities/DevCCRtestcaeRegistry-AcrPull"
+    }
+  }
+
+  variables {
+    container-app-environment = {
+      test = {
+        resource_group                   = "Project"
+        subnet                           = "APP"
+        registry_private_endpoint_subnet = "APP"
+        workload_profiles = {
+          default = { workload_profile_type = "D4", minimum_count = 0, maximum_count = 1 }
+        }
+      }
+    }
+    container-app = {
+      test = {
+        resource_group            = "Project"
+        container-app-environment = "test"
+        image                     = "nginx:latest"
+        cpu                       = 0.25
+        memory                    = "0.5Gi"
+        workload_profile_name     = "default"
+        ingress_target_port       = 80
+      }
+    }
+  }
+
+  assert {
+    condition     = length(module.containerRegistry) == 1
+    error_message = "containerRegistry module must be created when registry_id is not set"
+  }
+  assert {
+    condition     = module.containerRegistry["test"].name == "DevCCRtestcaeRegistry"
+    error_message = "auto-created registry must follow the {env}CCR{userDefinedString}Registry convention"
+  }
+  assert {
+    condition     = azurerm_container_app.apps["test"].registry[0].server == module.containerRegistry["test"].container-registry-object.login_server
+    error_message = "app must reference the auto-created registry's login_server, not the existing-registry data source"
+  }
+  assert {
+    condition     = azurerm_container_app.apps["test"].registry[0].identity == module.containerRegistry["test"].acr-pull-umi[0].id
+    error_message = "app must reference the auto-created registry's pull UMI, not a caller-supplied registry_pull_umi"
+  }
+}
+
+# Regression guard for the fix to local.app_umi_id_map: a caller that sets
+# registry_id on the environment but omits registry_pull_umi must fail plan
+# with a clear precondition error instead of an opaque "Invalid index" crash.
+run "existing_registry_without_pull_umi_fails" {
+  command = plan
+
+  expect_failures = [
+    azurerm_container_app.apps["test"],
+  ]
+
+  variables {
+    container-app-environment = {
+      test = {
+        resource_group = "Project"
+        subnet         = "APP"
+        registry_id    = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-registry/providers/Microsoft.ContainerRegistry/registries/existingacr"
+        workload_profiles = {
+          default = { workload_profile_type = "D4", minimum_count = 0, maximum_count = 1 }
+        }
+      }
+    }
+    container-app = {
+      test = {
+        resource_group            = "Project"
+        container-app-environment = "test"
+        image                     = "nginx:latest"
+        cpu                       = 0.25
+        memory                    = "0.5Gi"
+        workload_profile_name     = "default"
+        ingress_target_port       = 80
+      }
+    }
+  }
+}
+
+# Regression guard for the ingress_exposed_port precondition: exposed_port is
+# only meaningful for tcp transport, and must fail plan rather than silently
+# producing an invalid config for the provider to reject.
+run "exposed_port_requires_tcp_transport_fails" {
+  command = plan
+
+  expect_failures = [
+    azurerm_container_app.apps["test"],
+  ]
+
+  variables {
+    container-app = {
+      test = {
+        resource_group            = "Project"
+        container-app-environment = "test"
+        image                     = "nginx:latest"
+        cpu                       = 0.25
+        memory                    = "0.5Gi"
+        workload_profile_name     = "default"
+        ingress_target_port       = 80
+        ingress_transport         = "http"
+        ingress_exposed_port      = 5000
+      }
+    }
+  }
+}

@@ -14,6 +14,7 @@ certificates, and user-assigned managed identities.
 | `umi_name` | string | Override the auto-generated environment UMI name (default: `{env}-{group}-{project}-{key}-cae-umi`) |
 | `umi_isolation_scope` | string | Isolation scope for the environment's UMI. Only possible value is `Regional` |
 | `infrastructure_resource_group_name` | string | Name of the platform-managed infrastructure resource group |
+| `internal_load_balancer_enabled` | bool | Whether the environment's load balancer is internal-only (default: `true`). Set to `false` to allow `public_network_access = "Enabled"` to take effect |
 | `zone_redundancy_enabled` | bool | Should the environment be created with Zone Redundancy enabled? |
 | `mutual_tls_enabled` | bool | Should mutual TLS (mTLS) be enabled? |
 | `public_network_access` | string | `Enabled` or `Disabled` |

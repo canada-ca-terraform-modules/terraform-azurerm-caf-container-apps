@@ -18,8 +18,9 @@ container-app-environment = {
     # Optional: ID to the LAW that should be used for container system and app logs
     # log_analytics_workspace_id = ""
 
-    # Optional: Information about an existing registry to reference. Otherwise a new registry will be created
-    # registry_id = "/subscriptions/00000000-0000-0000-000
+    # Optional: Information about an existing registry to reference. Otherwise a new registry will be created.
+    # registry_pull_umi is required when registry_id is set.
+    # registry_id       = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-registry/providers/Microsoft.ContainerRegistry/registries/registry-name"
     # registry_pull_umi = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-name/providers/Microsoft.ManagedIdentity/userAssignedIdentities/umi-name"
 
     registry_private_endpoint_subnet = "RZ" # this can refer to a key in var.subnets or be a full resource ID, needs to be in the same VNet as the environment subnet
@@ -41,13 +42,18 @@ container-app-environment = {
     # Optional (azurerm >= 5.0): name of the platform-managed resource group hosting infrastructure resources
     # infrastructure_resource_group_name = ""
 
+    # Optional (azurerm >= 5.0): whether the environment's load balancer is internal-only (default: true).
+    # Must be set to false for "public_network_access = \"Enabled\"" to take effect.
+    # internal_load_balancer_enabled = false
+
     # Optional (azurerm >= 5.0): should the environment be created with Zone Redundancy enabled?
     # zone_redundancy_enabled = false
 
     # Optional (azurerm >= 5.0): should mutual TLS (mTLS) be enabled?
     # mutual_tls_enabled = false
 
-    # Optional (azurerm >= 5.0): public network access setting. Possible values are "Enabled" and "Disabled"
+    # Optional (azurerm >= 5.0): public network access setting. Possible values are "Enabled" and "Disabled".
+    # Requires internal_load_balancer_enabled = false to have any effect.
     # public_network_access = "Enabled"
 
     # Optional (azurerm >= 5.0): where application logs are saved. Possible values are "log-analytics" and "azure-monitor"
@@ -99,12 +105,13 @@ container-app = {
     # Optional (azurerm >= 5.0): the maximum number of instances of this app
     # max_replicas = 3
 
-    # Optional (azurerm >= 5.0): secrets exposed to the container via secret_name / key_vault_secret_id / identity
+    # Optional (azurerm >= 5.0): secrets exposed to the container. The map key is the secret name.
+    # Prefer key_vault_secret_id + identity over a plaintext value - plaintext values are stored in state.
     # secrets = {
     #   my-secret = {
-    #     value               = "some-value"                 # OR
-    #     key_vault_secret_id = "https://kv.vault.azure.net/secrets/my-secret"
-    #     identity            = "System"                      # or a User Assigned Identity resource ID
+    #     key_vault_secret_id = "https://kv.vault.azure.net/secrets/my-secret" # preferred
+    #     identity            = "System"                                      # or a User Assigned Identity resource ID
+    #     # value             = "some-value"                                   # avoid: stored in plaintext in state
     #   }
     # }
 

@@ -38,7 +38,7 @@ resource "azurerm_container_app_environment" "env" {
 
   infrastructure_subnet_id                    = local.container_app_subnet_ids[each.key]
   infrastructure_resource_group_name          = try(each.value.infrastructure_resource_group_name, null)
-  internal_load_balancer_enabled              = true
+  internal_load_balancer_enabled              = try(each.value.internal_load_balancer_enabled, true)
   zone_redundancy_enabled                     = try(each.value.zone_redundancy_enabled, null)
   mutual_tls_enabled                          = try(each.value.mutual_tls_enabled, null)
   public_network_access                       = try(each.value.public_network_access, null)
@@ -71,5 +71,10 @@ resource "azurerm_container_app_environment" "env" {
 
   lifecycle {
     ignore_changes = [infrastructure_resource_group_name]
+
+    precondition {
+      condition     = !(try(each.value.internal_load_balancer_enabled, true) == true && try(each.value.public_network_access, null) == "Enabled")
+      error_message = "container-app-environment '${each.key}': 'public_network_access = \"Enabled\"' has no effect while 'internal_load_balancer_enabled' is true (the default). Set 'internal_load_balancer_enabled = false' to expose the environment publicly."
+    }
   }
 }
