@@ -36,13 +36,13 @@ container-app-environment = {
 
 container-app = {
   livetest = {
-    resource_group             = "live_test"
-    container-app-environment  = "livetest"
+    resource_group            = "live_test"
+    container-app-environment = "livetest"
 
-    image                  = "nginx:latest"
-    cpu                    = 0.25
-    memory                 = "0.5Gi"
-    workload_profile_name  = "default"
+    image                 = "nginx:latest"
+    cpu                   = 0.25
+    memory                = "0.5Gi"
+    workload_profile_name = "default"
 
     ingress_target_port      = 80
     ingress_external_enabled = true
