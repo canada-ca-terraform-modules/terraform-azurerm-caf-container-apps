@@ -358,6 +358,52 @@ run "auto_created_registry_path" {
     condition     = azurerm_container_app.apps["test"].registry[0].identity == module.containerRegistry["test"].acr-pull-umi[0].id
     error_message = "app must reference the auto-created registry's pull UMI, not a caller-supplied registry_pull_umi"
   }
+  assert {
+    # Backward-compat guard: callers who don't set registry_private_dns_zone_id (every caller
+    # before this field existed) must get the exact same 3-key private_endpoint object as before -
+    # no local_dns_zone key present at all, not even null - so their plan shows zero changes.
+    condition     = !contains(keys(local.registry_private_endpoint["test"]), "local_dns_zone")
+    error_message = "omitting registry_private_dns_zone_id must not add a local_dns_zone key - existing callers must see no diff"
+  }
+}
+
+# Regression guard for the private-DNS-zone gap: the auto-created registry's private endpoint had
+# no way to link a private DNS zone, so a real Container App Environment could never resolve the
+# registry's hostname (surfaced as a misleading "unable to pull image using Managed identity"
+# error, not an RBAC one - see module-live-test-conversion skill's Known bug 7). Guards that
+# registry_private_dns_zone_id actually reaches the private endpoint's DNS zone group.
+run "auto_created_registry_private_dns_zone_wiring" {
+  command = plan
+
+  variables {
+    container-app-environment = {
+      test = {
+        resource_group                   = "Project"
+        subnet                           = "APP"
+        registry_private_endpoint_subnet = "APP"
+        registry_private_dns_zone_id     = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-project/providers/Microsoft.Network/privateDnsZones/privatelink.azurecr.io"
+        workload_profiles = {
+          default = { workload_profile_type = "D4", minimum_count = 0, maximum_count = 1 }
+        }
+      }
+    }
+    container-app = {
+      test = {
+        resource_group            = "Project"
+        container-app-environment = "test"
+        image                     = "nginx:latest"
+        cpu                       = 0.25
+        memory                    = "0.5Gi"
+        workload_profile_name     = "default"
+        ingress_target_port       = 80
+      }
+    }
+  }
+
+  assert {
+    condition     = local.registry_private_endpoint["test"].local_dns_zone == "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-project/providers/Microsoft.Network/privateDnsZones/privatelink.azurecr.io"
+    error_message = "registry_private_dns_zone_id must be wired into the auto-created registry's private endpoint config as local_dns_zone"
+  }
 }
 
 # Regression guard for the fix to local.app_umi_id_map: a caller that sets

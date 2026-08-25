@@ -62,6 +62,24 @@ resource "azurerm_subnet" "rz" {
   address_prefixes     = ["10.250.2.0/27"]
 }
 
+# Self-owned DNS for the auto-created registry's private endpoint - not a shared/central zone.
+# Without this, the registry's private endpoint gets an IP but no DNS record, so the Container
+# App Environment can never resolve the registry's hostname; every image pull then fails as if
+# the pull identity itself lacked permission (it doesn't - this is a name resolution gap).
+resource "azurerm_private_dns_zone" "acr" {
+  name                = "privatelink.azurecr.io"
+  resource_group_name = azurerm_resource_group.live_test.name
+  tags                = var.tags
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "acr" {
+  name                 = "${var.env}-caf-container-apps-live-test-${var.pr_number}-acr-link"
+  private_dns_zone_id  = azurerm_private_dns_zone.acr.id
+  virtual_network_id   = azurerm_virtual_network.live_test.id
+  registration_enabled = false
+  tags                 = var.tags
+}
+
 locals {
   # terraform-azurerm-caf-container-apps expects a purpose-keyed map, not a
   # flat object.

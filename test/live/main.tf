@@ -1,4 +1,5 @@
 terraform {
+  # touched to trigger live-test.yml's pull_request path filter for PR B (workflow-only diff otherwise)
   required_version = ">= 1.9"
   required_providers {
     azurerm = {
@@ -39,7 +40,13 @@ module "container_apps" {
   subnets         = local.subnets         # from test_dependencies.tf
   tags            = var.tags
 
-  container-app-environment = var.container-app-environment
-  container-app             = var.container-app
-  keyvault_id               = null # out of scope for this harness - no certificate fixture
+  # Injects this harness's self-owned private DNS zone id per environment key - not something a
+  # static tfvars fixture can express, since the zone's id only exists after apply.
+  container-app-environment = {
+    for key, value in var.container-app-environment : key => merge(value, {
+      registry_private_dns_zone_id = azurerm_private_dns_zone.acr.id
+    })
+  }
+  container-app = var.container-app
+  keyvault_id   = null # out of scope for this harness - no certificate fixture
 }
