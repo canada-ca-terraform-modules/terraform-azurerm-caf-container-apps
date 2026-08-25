@@ -83,32 +83,20 @@ jobs:
           # into it first. Create just the registry ahead of the rest, seed it, then apply
           # everything else - the PR-branch apply below reuses this same shared state/
           # registry, so it only needs seeding once per run.
+          #
+          # The harness's own private DNS zone (for the registry's private endpoint) must also
+          # be targeted here, before the full apply: its id feeds into the container-apps module's
+          # container-app-environment input, which the module uses as a nested module's for_each
+          # key set - an unknown (not-yet-created) id there makes Terraform refuse to plan with
+          # "Invalid for_each argument", the same reason the registry itself is targeted first.
+          #
           # `terraform output` doesn't reflect a `-target`-only apply, so read the
           # registry name straight out of state instead.
-          terraform apply -auto-approve -target=module.container_apps.module.containerRegistry -var-file=config/container-apps.tfvars
+          terraform apply -auto-approve -target=azurerm_private_dns_zone.acr -target=azurerm_private_dns_zone_virtual_network_link.acr -target=module.container_apps.module.containerRegistry -var-file=config/container-apps.tfvars
           REGISTRY_ADDR=$(terraform state list | grep 'azurerm_container_registry\.registry$')
           REGISTRY_NAME=$(terraform state show "$REGISTRY_ADDR" | awk -F'"' '/^ *name *=/ {print $2; exit}')
           az acr import --name "$REGISTRY_NAME" --source docker.io/library/nginx:latest --image nginx:latest --force
-          # The targeted apply above also creates the registry's pull UMI and its AcrPull role
-          # assignment - Azure RBAC propagation for that assignment lags behind the write API
-          # returning, so the container app below can fail to pull with "unable to pull image
-          # using Managed identity" if it's created too soon after. Propagation time is variable
-          # (a fixed 60s sleep wasn't enough once) - retry specifically on that error instead of
-          # guessing a longer fixed delay, so this doesn't fail fast on unrelated errors either.
-          set +e
-          for attempt in 1 2 3 4 5; do
-            terraform apply -auto-approve -var-file=config/container-apps.tfvars 2>&1 | tee apply.log
-            status=${PIPESTATUS[0]}
-            [ "$status" -eq 0 ] && break
-            if grep -q "unable to pull image using Managed identity" apply.log; then
-              echo "AcrPull role assignment not yet propagated (attempt ${attempt}/5) - waiting 60s and retrying"
-              sleep 60
-            else
-              exit "$status"
-            fi
-          done
-          set -e
-          [ "$status" -eq 0 ]
+          terraform apply -auto-approve -var-file=config/container-apps.tfvars
 
       - name: PR plan
         id: tf_plan
