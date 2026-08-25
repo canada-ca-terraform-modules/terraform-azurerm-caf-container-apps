@@ -84,15 +84,18 @@ jobs:
           # everything else - the PR-branch apply below reuses this same shared state/
           # registry, so it only needs seeding once per run.
           #
-          # The harness's own private DNS zone (for the registry's private endpoint) must also
-          # be targeted here, before the full apply: its id feeds into the container-apps module's
-          # container-app-environment input, which the module uses as a nested module's for_each
-          # key set - an unknown (not-yet-created) id there makes Terraform refuse to plan with
-          # "Invalid for_each argument", the same reason the registry itself is targeted first.
+          # The harness's own private DNS zone (for the registry's private endpoint) must exist,
+          # with a KNOWN id, before the registry's private endpoint is even planned: its id feeds
+          # into the container-apps module's container-app-environment input, which the module uses
+          # as a nested module's for_each key set - if it's still unknown (not yet created) at plan
+          # time, Terraform refuses with "Invalid for_each argument". Targeting both in the SAME
+          # apply doesn't help - for_each is still evaluated against a plan where neither exists yet,
+          # regardless of target order - so this must be two separate, sequential applies.
           #
           # `terraform output` doesn't reflect a `-target`-only apply, so read the
           # registry name straight out of state instead.
-          terraform apply -auto-approve -target=azurerm_private_dns_zone.acr -target=azurerm_private_dns_zone_virtual_network_link.acr -target=module.container_apps.module.containerRegistry -var-file=config/container-apps.tfvars
+          terraform apply -auto-approve -target=azurerm_private_dns_zone.acr -target=azurerm_private_dns_zone_virtual_network_link.acr -var-file=config/container-apps.tfvars
+          terraform apply -auto-approve -target=module.container_apps.module.containerRegistry -var-file=config/container-apps.tfvars
           REGISTRY_ADDR=$(terraform state list | grep 'azurerm_container_registry\.registry$')
           REGISTRY_NAME=$(terraform state show "$REGISTRY_ADDR" | awk -F'"' '/^ *name *=/ {print $2; exit}')
           az acr import --name "$REGISTRY_NAME" --source docker.io/library/nginx:latest --image nginx:latest --force
