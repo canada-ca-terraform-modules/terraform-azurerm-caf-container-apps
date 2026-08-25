@@ -89,6 +89,11 @@ jobs:
           REGISTRY_ADDR=$(terraform state list | grep 'azurerm_container_registry\.registry$')
           REGISTRY_NAME=$(terraform state show "$REGISTRY_ADDR" | awk -F'"' '/^ *name *=/ {print $2; exit}')
           az acr import --name "$REGISTRY_NAME" --source docker.io/library/nginx:latest --image nginx:latest --force
+          # The targeted apply above also creates the registry's pull UMI and its AcrPull role
+          # assignment - Azure RBAC propagation for that assignment lags behind the write API
+          # returning, so the container app below can fail to pull with "unable to pull image
+          # using Managed identity" if it's created too soon after. Give it time to propagate.
+          sleep 60
           terraform apply -auto-approve -var-file=config/container-apps.tfvars
 
       - name: PR plan
