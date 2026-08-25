@@ -92,9 +92,23 @@ jobs:
           # The targeted apply above also creates the registry's pull UMI and its AcrPull role
           # assignment - Azure RBAC propagation for that assignment lags behind the write API
           # returning, so the container app below can fail to pull with "unable to pull image
-          # using Managed identity" if it's created too soon after. Give it time to propagate.
-          sleep 60
-          terraform apply -auto-approve -var-file=config/container-apps.tfvars
+          # using Managed identity" if it's created too soon after. Propagation time is variable
+          # (a fixed 60s sleep wasn't enough once) - retry specifically on that error instead of
+          # guessing a longer fixed delay, so this doesn't fail fast on unrelated errors either.
+          set +e
+          for attempt in 1 2 3 4 5; do
+            terraform apply -auto-approve -var-file=config/container-apps.tfvars 2>&1 | tee apply.log
+            status=${PIPESTATUS[0]}
+            [ "$status" -eq 0 ] && break
+            if grep -q "unable to pull image using Managed identity" apply.log; then
+              echo "AcrPull role assignment not yet propagated (attempt ${attempt}/5) - waiting 60s and retrying"
+              sleep 60
+            else
+              exit "$status"
+            fi
+          done
+          set -e
+          [ "$status" -eq 0 ]
 
       - name: PR plan
         id: tf_plan
