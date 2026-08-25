@@ -1,5 +1,5 @@
 terraform {
-  # touched to trigger live-test.yml's pull_request path filter for PR B (workflow-only diff otherwise)
+  # touched again for PR #18 (workflow-only diff otherwise wouldn't match live-test.yml's path filter)
   required_version = ">= 1.9"
   required_providers {
     azurerm = {
