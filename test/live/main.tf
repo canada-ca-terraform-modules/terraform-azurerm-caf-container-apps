@@ -50,3 +50,10 @@ module "container_apps" {
   container-app = var.container-app
   keyvault_id   = null # out of scope for this harness - no certificate fixture
 }
+
+# Needed by live-test.yml's Baseline apply step to `az acr import` a real image into the
+# auto-created registry before the container app tries to pull it (see workflow comment).
+output "registries" {
+  value     = module.container_apps.registries
+  sensitive = true
+}

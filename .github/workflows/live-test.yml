@@ -77,6 +77,15 @@ jobs:
         working-directory: baseline/test/live
         run: |
           terraform init -backend-config="path=${LIVE_TEST_STATE}"
+          # The module always prefixes the configured image with the (auto-created or
+          # referenced) registry's login server - a freshly auto-created registry starts
+          # empty, so the container app's image pull fails unless something is imported
+          # into it first. Create just the registry ahead of the rest, seed it, then apply
+          # everything else - the PR-branch apply below reuses this same shared state/
+          # registry, so it only needs seeding once per run.
+          terraform apply -auto-approve -target=module.container_apps.module.containerRegistry -var-file=config/container-apps.tfvars
+          REGISTRY_LOGIN_SERVER=$(terraform output -json registries | jq -r '[.[] | .object.login_server][0]')
+          az acr import --name "${REGISTRY_LOGIN_SERVER%%.*}" --source docker.io/library/nginx:latest --image nginx:latest --force
           terraform apply -auto-approve -var-file=config/container-apps.tfvars
 
       - name: PR plan
