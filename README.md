@@ -29,6 +29,7 @@ certificates, and user-assigned managed identities.
 | `max_inactive_revisions` | number | The maximum number of inactive revisions allowed for this Container App |
 | `max_replicas` | number | The maximum number of instances of this app |
 | `secrets` | map(object) | Secrets exposed to the container via `value` / `key_vault_secret_id` / `identity` |
+| `secret_env` | map(string) | Environment variables that reference Container App secrets. The map key is the environment variable name and the value is the Container App secret name |
 | `dapr` | object | Dapr integration (`app_id`, `app_port`, `app_protocol`) |
 | `ingress_transport` | string | `auto`, `http`, `http2` or `tcp` |
 | `ingress_allow_insecure_connections` | bool | Should ingress allow insecure (non-HTTPS) connections? |
@@ -36,27 +37,57 @@ certificates, and user-assigned managed identities.
 | `ip_security_restrictions` | map(object) | IP-filtering rules for the ingress |
 | `cors` | object | CORS configuration for the ingress |
 
+### Secret-backed environment variables
+
+Container App secrets can be exposed to containers as environment variables using `secret_env`.
+
+For example:
+
+```hcl
+secrets = {
+  backend-api-key = {
+    key_vault_secret_id = "https://example.vault.azure.net/secrets/API-KEY"
+    identity            = "/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.ManagedIdentity/userAssignedIdentities/<identity-name>"
+  }
+}
+
+secret_env = {
+  BACKEND_API_KEY = "backend-api-key"
+}
+```
+
+This generates a secret-backed environment variable equivalent to:
+
+```hcl
+env {
+  name        = "BACKEND_API_KEY"
+  secret_name = "backend-api-key"
+}
+```
+
+Regular environment variables continue to use the existing `env` map.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
-| <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) | ~> 2.0 |
-| <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) | ~> 5.0 |
+| <a name="requirement_terraform"></a> #requirement\_terraform | >= 1.9 |
+| <a name="requirement_azapi"></a> #requirement\_azapi | ~> 2.0 |
+| <a name="requirement_azurerm"></a> #requirement\_azurerm | ~> 5.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_azapi"></a> [azapi](#provider\_azapi) | ~> 2.0 |
-| <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | ~> 5.0 |
+| <a name="provider_azapi"></a> #provider\_azapi | ~> 2.0 |
+| <a name="provider_azurerm"></a> #provider\_azurerm | ~> 5.0 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_containerRegistry"></a> [containerRegistry](#module\_containerRegistry) | github.com/canada-ca-terraform-modules/terraform-azurerm-caf-container-registry.git | v1.1.0 |
+| <a name="module_containerRegistry"></a> #module\_containerRegistry | github.com/canada-ca-terraform-modules/terraform-azurerm-caf-container-registry.git | v1.1.0 |
 
 ## Resources
 
@@ -75,22 +106,22 @@ certificates, and user-assigned managed identities.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_container-app"></a> [container-app](#input\_container-app) | n/a | `any` | `{}` | no |
-| <a name="input_container-app-environment"></a> [container-app-environment](#input\_container-app-environment) | inputs | `any` | `{}` | no |
-| <a name="input_env"></a> [env](#input\_env) | (Required) Env value for the name of the resource | `string` | n/a | yes |
-| <a name="input_group"></a> [group](#input\_group) | (Required) Group value for the name of the resource | `string` | n/a | yes |
-| <a name="input_keyvault_id"></a> [keyvault\_id](#input\_keyvault\_id) | The project key vault id from which certificates should be read | `string` | `null` | no |
-| <a name="input_location"></a> [location](#input\_location) | Azure location for the resource | `string` | `"canadacentral"` | no |
-| <a name="input_project"></a> [project](#input\_project) | (Required) Project value for the name of the resource | `string` | n/a | yes |
-| <a name="input_resource_groups"></a> [resource\_groups](#input\_resource\_groups) | Resouce group object containing a list of resource group in the target project | `any` | `null` | no |
-| <a name="input_subnets"></a> [subnets](#input\_subnets) | Subnet object containing a list of subnets in the target project | `any` | `null` | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Maps of tags that will be applied to the resource | `map(string)` | `{}` | no |
+| <a name="input_container-app"></a> #input\_container-app | n/a | `any` | `{}` | no |
+| <a name="input_container-app-environment"></a> #input\_container-app-environment | inputs | `any` | `{}` | no |
+| <a name="input_env"></a> #input\_env | (Required) Env value for the name of the resource | `string` | n/a | yes |
+| <a name="input_group"></a> #input\_group | (Required) Group value for the name of the resource | `string` | n/a | yes |
+| <a name="input_keyvault_id"></a> #input\_keyvault\_id | The project key vault id from which certificates should be read | `string` | `null` | no |
+| <a name="input_location"></a> #input\_location | Azure location for the resource | `string` | `"canadacentral"` | no |
+| <a name="input_project"></a> #input\_project | (Required) Project value for the name of the resource | `string` | n/a | yes |
+| <a name="input_resource_groups"></a> #input\_resource\_groups | Resouce group object containing a list of resource group in the target project | `any` | `null` | no |
+| <a name="input_subnets"></a> #input\_subnets | Subnet object containing a list of subnets in the target project | `any` | `null` | no |
+| <a name="input_tags"></a> #input\_tags | Maps of tags that will be applied to the resource | `map(string)` | `{}` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_apps"></a> [apps](#output\_apps) | n/a |
-| <a name="output_environments"></a> [environments](#output\_environments) | n/a |
-| <a name="output_registries"></a> [registries](#output\_registries) | n/a |
+| <a name="output_apps"></a> #output\_apps | n/a |
+| <a name="output_environments"></a> #output\_environments | n/a |
+| <a name="output_registries"></a> #output\_registries | n/a |
 <!-- END_TF_DOCS -->

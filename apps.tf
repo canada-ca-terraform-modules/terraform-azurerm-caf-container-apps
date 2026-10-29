@@ -79,6 +79,16 @@ resource "azurerm_container_app" "apps" {
           value = env.value
         }
       }
+
+      dynamic "env" {
+        for_each = try(each.value.secret_env, {})
+        iterator = secret_env
+
+        content {
+          name        = secret_env.key
+          secret_name = secret_env.value
+        }
+      }
     }
 
     dynamic "http_scale_rule" {
